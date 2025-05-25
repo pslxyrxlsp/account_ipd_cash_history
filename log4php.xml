@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration xmlns="http://logging.apache.org/log4php/">
+	<appender name="myAppender" class="LoggerAppenderDailyFile">
+		<filter class="LoggerFilterLevelMatch">
+			<param name="LevelToMatch" value="debug" />
+			<param name="AcceptOnMatch" value="true" />
+		</filter>
+		<param name="DatePattern" value="Ymd" />
+		<layout class="LoggerLayoutPattern">
+			<param name="ConversionPattern" value="[%p] %d %c %M - %m%n" />
+		</layout>
+		<param name="file" value="log/%s.log" />
+		<param name="append" value="true" />
+		<param name="maxFileSize" value="20MB" />
+		<param name="maxBackupIndex" value="5" />
+	</appender>
+	<root>
+		<!-- enable log -->
+		<level value="DEBUG" />
+		<!-- disable log -->
+		<!-- <level value="WARN" />  -->
+		<appender_ref ref="myAppender" />
+	</root>
+</configuration>
