@@ -163,8 +163,6 @@ class AccountIpdCashHistory
     private  function getAccountIpdCashHistory($company)
     {
         $today = $company['today'];
-        // $yesterday = $this->getYesterdaytDate($today);
-        // print_r( $comany );
         $yesterday = $company['lastday'];
         $data = [];
         $sql = "SELECT resfour.*,rtrim(t.titlename) || ' ' ||rtrim(p.firstName) || ' ' || rtrim(p.lastName) as ptfullname,
@@ -428,8 +426,9 @@ class AccountIpdCashHistory
                 return "'" . str_replace("'", "''", $v) . "'";
             }, array_values($data[$i]));
             $sql = "INSERT INTO ipdcash_history (" . implode(',', $fields) . ") VALUES (" . implode(',', $values) . ");";
-            $this->logger->debug($sql);
-            // $this->dao->insert($sql);
+            // print($sql . "\n");
+            // $this->logger->debug($sql);
+            $this->dao->insert($sql);
         }
         return $data;
     }
