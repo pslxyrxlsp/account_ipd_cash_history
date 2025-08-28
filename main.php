@@ -160,13 +160,14 @@ class AccountIpdCashHistory
         return $result;
     }
 
-    private  function getAccountIpdCashHistory($comany)
+    private  function getAccountIpdCashHistory($company)
     {
-        $today = $comany['today'];
-        $yesterday = $this->getYesterdaytDate($today);
+        $today = $company['today'];
+        // $yesterday = $this->getYesterdaytDate($today);
         // print_r( $comany );
+        $yesterday = $company['lastday'];
         $data = [];
-        $result = "SELECT resfour.*,rtrim(t.titlename) || ' ' ||rtrim(p.firstName) || ' ' || rtrim(p.lastName) as ptfullname,
+        $sql = "SELECT resfour.*,rtrim(t.titlename) || ' ' ||rtrim(p.firstName) || ' ' || rtrim(p.lastName) as ptfullname,
                 (_2143110	+
                 _2143250	+
                 _4110000	+
@@ -413,8 +414,8 @@ class AccountIpdCashHistory
                 order by recpdate 
             ";
         // $this->logger->debug($SQLDETAIL);
-        $data = $this->dao->query($result);
-
+        $data = $this->dao->query($sql);
+        $data = $this->functFixedDuplicate($data);
         // $this->logger->debug ( "-------------------------------------------------------------" );
         for ($i = 0; $i < count($data); $i++) {
             $fields = array_keys($data[$i]);
@@ -433,12 +434,73 @@ class AccountIpdCashHistory
         return $data;
     }
 
+    private function functFixedDuplicate($records) {
+        $keyCount = [];
+        $duplicateKeys = [];
+        $allDuplicates = [];
+        // Step 1: Count and assign key duplcate occurrences 
+        foreach ($records as $record) {
+            $key = $record['refer'];
+            if (!isset($keyCount[$key])) {
+                $keyCount[$key] = 0;
+            }
+            $keyCount[$key]++;            
+            // If we've seen this key more than once, mark it as duplicate
+            if ($keyCount[$key] > 1) {
+                $duplicateKeys[$key] = true;
+            }            
+        }
+        // Step 2: Collect all records with duplicate keys using duplicateKeys array
+        foreach ($records as $record) {
+            $key = $record['refer'];
+            if (isset($duplicateKeys[$key])) {
+                foreach ($record as $fieldName => $fieldValue) {
+                    if (substr($fieldName, 0, 1) === '_') {
+                        // Reset any field starting with underscore to 0
+                        $record[$fieldName] = 0.00;
+                    }
+                }
+                $allDuplicates[] = $record;
+            }
+        }
+        usort($allDuplicates, function ($a, $b) {
+            return strcmp($a['hn'], $b['hn']);
+        });
+        // fixed duplicates by refer using php refernec and update records 
+        foreach ($allDuplicates as $key => &$duplicate) {
+            // $sql = "SELECT * FROM bill_d LEFT JOIN chr_code ccode ON bill_d.charge_code = ccode.chr_code WHERE rxno = '{$duplicate['rxno']}'";
+            $sql = "SELECT charge_code, ccode.acctcode, sum(amount::NUMERIC) AS amount
+                    FROM bill_d
+                        LEFT JOIN chr_code ccode ON bill_d.charge_code = ccode.chr_code
+                    WHERE rxno = '{$duplicate['rxno']}' GROUP BY bill_d.charge_code, ccode.acctcode";
+            $res = $this->dao->query($sql);
+            $total = 0.00;
+            foreach ($res as $fieldName => $r) {
+                $amt = 0.00;
+                $key_for_duplicate = '_' . trim($r['acctcode']);         
+                $amt += trim($r['amount']) ?? 0.00;      
+                $duplicate[$key_for_duplicate] = $amt; // Set the amount for the specific key
+                $total += $amt;                                
+            }
+            $duplicate['total'] = $total;                    
+        }
+         // Step 3: remove all duplicates from the original records
+        $uniqueRecords = $this->removeAllDuplicates($records, 'refer');       
+        // Step 4: merge unique and modified duplicates then sort the result by refer
+        $result = array_merge($uniqueRecords, $allDuplicates);
+        usort($result, function ($a, $b) {
+            return strcmp($a['refer'], $b['refer']);
+        });
+        return $result;
+        // return $allDuplicates;
+    }
+
     public function run()
     {
         $this->dao->beginTransaction();
-        $comany = $this->getCompany();
+        $company = $this->getCompany();
         //  print_r ( $comany   );
-        $this->getAccountIpdCashHistory($comany[0]);
+        $this->getAccountIpdCashHistory($company[0]);
         // print_r ( $result );
         $this->dao->commitTransaction();
     }
