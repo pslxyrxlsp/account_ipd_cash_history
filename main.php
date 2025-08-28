@@ -428,10 +428,21 @@ class AccountIpdCashHistory
                 return "'" . str_replace("'", "''", $v) . "'";
             }, array_values($data[$i]));
             $sql = "INSERT INTO ipdcash_history (" . implode(',', $fields) . ") VALUES (" . implode(',', $values) . ");";
-            // $this->logger->debug($sql);
-            $this->dao->insert($sql);
+            $this->logger->debug($sql);
+            // $this->dao->insert($sql);
         }
         return $data;
+    }
+
+    function removeAllDuplicates($array, $keyField = 'refer') {
+        // Extract all values for the key field
+        $allValues = array_column($array, $keyField);        
+        // Count occurrences of each value
+        $valueCounts = array_count_values($allValues);        
+        // Keep only items where the value appears exactly once
+        return array_filter($array, function($item) use ($valueCounts, $keyField) {
+            return $valueCounts[$item[$keyField]] === 1;
+        });
     }
 
     private function functFixedDuplicate($records) {
