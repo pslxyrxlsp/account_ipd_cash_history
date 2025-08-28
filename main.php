@@ -1,6 +1,4 @@
 <?php
-// require_once __DIR__ . '/apache-log4php-2.3.0/src/main/php/Logger.php';
-
 /**
  * PostgreSQL class
  */
