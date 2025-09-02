@@ -99,7 +99,7 @@ class AccountIpdCashHistory
     private $dao = NULL;
     // private $logger = NULL;
     private $databaseConfig = [
-        'host' => '172.10.0.10',
+        'host' => '172.10.0.2',
         'port' => 5432,
         'user' => 'homc',
         'Encoding' => 'WIN874',
@@ -160,7 +160,7 @@ class AccountIpdCashHistory
         return $result;
     }
 
-    private  function getAccountIpdCashHistory($company)
+    private  function insertAccountIpdCashHistory($company)
     {
         $today = $company['today'];
         $yesterday = $company['lastday'];
@@ -510,7 +510,7 @@ class AccountIpdCashHistory
         $this->dao->beginTransaction();
         $company = $this->getCompany();
         //  print_r ( $comany   );
-        $this->getAccountIpdCashHistory($company[0]);
+        $this->insertAccountIpdCashHistory($company[0]);
         // print_r ( $result );
         $this->dao->commitTransaction();
     }
