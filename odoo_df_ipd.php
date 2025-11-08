@@ -221,23 +221,6 @@ class ExportOdooIpd {
         return $retVal;
     }
 
-    private function IpdReceiptMergeDetailHistory($company, $receipt_header)
-    {
-        $receipt_detail = [];
-        foreach ($receipt_header as $header) {
-            $recphid = $header['recphid'];
-            $details = $this->dao->query("SELECT 
-                        receiptd.recphid, 
-                        receiptd.chr_code, 
-                        receiptd.amount,
-                        cc.chr_des FROM receiptd 
-                    LEFT JOIN chr_code cc ON receiptd.chr_code = cc.chr_code
-                    WHERE recphid = $recphid");
-            $receipt_detail = array_merge($header, $details);
-        }
-        return $receipt_detail;
-    }
-
     private function IpdReceiptDoctorFeesDetail($company, $receipt_header)
     {
         $sql = "SELECT ex.* 
@@ -254,7 +237,7 @@ class ExportOdooIpd {
         $this->dao->beginTransaction();
         $company = $this->getCompany();   
         $receipt_header =  $this->IpdReceiptHeaderHistory($company[0]);
-        $receipt_detail = $this->IpdReceiptMergeDetailHistory($company[0], $receipt_header);
+        $receipt_detail = $this->IpdReceiptHeaderDetailHistory($company[0], $receipt_header);
         print_r ( $receipt_detail );
         $this->dao->commitTransaction();
     }
