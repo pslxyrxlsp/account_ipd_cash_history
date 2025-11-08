@@ -141,14 +141,80 @@ class ExportOdooIpd {
     {
         $today = $company['today'];
         $yesterday = $company['lastday'];
-        $sql = "SELECT * FROM receipth WHERE recpdate = '{$yesterday}' AND recpstatusflag = 'I'";
+        $sql = "SELECT 
+                    hn,
+                    recphid,
+                    lastdrunno,
+                    cashier_code,
+                    sessionid,
+                    contractcode,
+                    brokercode,
+                    recpno,
+                    recpdate,
+                    recptime,
+                    recpstatusflag,
+                    ladmit_n,
+                    fdate,
+                    tdate,
+                    lastdebt,
+                    totalchargeamt,
+                    amount,
+                    discount,
+                    addupamt,
+                    currentdebt,
+                    canceldate,
+                    cancelflag,
+                    recptypeflag,
+                    poststatus,
+                    account_date,
+                    paidbyhn,
+                    lastchgrec,
+                    mergeflag,
+                    cashiercodecancel,
+                    regist_date,
+                    arpaidamt,
+                    recpdiag,
+                    refer,
+                    sysid,
+                    maker,
+                    mergetype,
+                    jv_n,
+                    firstchgrec,
+                    recpamt,
+                    cancelid,
+                    paymversion,
+                    usedeposit,
+                    canceltime,
+                    discrate,
+                    overdiscamt,
+                    ardate,
+                    regist_flag
+                FROM receipth 
+                WHERE 
+                    recpdate = '{$yesterday}' AND 
+                    recpstatusflag = 'I'";
         $result = $this->dao->query($sql);
         return $result;
     }
 
-    private function IpdReceiptD($company, $receipt_header)
+    private function IpdReceiptHeaderDetailHistory($company, $receipt_header)
     {
+        $yesterday = $company['lastday'];
+        // need to append in array
+        $retVal = [];
+        $index = 0;
+        foreach ($receipt_header as $key => $value) {
+            $recphid = $value['recphid'];
+            $sql = "SELECT receiptd.*, cc.chr_des FROM receiptd 
+                LEFT JOIN chr_code cc ON receiptd.chr_code = cc.chr_code
+                WHERE recphid = $recphid;";
+            $result = $this->dao->query($sql);
+            $retVal[$index] = $result;
+            $index++;
+        }
         
+        
+        return $retVal;
     }
 
     public function run()
@@ -157,6 +223,7 @@ class ExportOdooIpd {
         $company = $this->getCompany();
         //  print_r ( $comany   );
         $receipt_header =  $this->IpdReceiptHeaderHistory($company[0]);
+        $receipt_detail = $this->IpdReceiptHeaderDetailHistory($company[0], $receipt_header);
         print_r ( $receipt_header );
         $this->dao->commitTransaction();
     }
